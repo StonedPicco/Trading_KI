@@ -199,8 +199,9 @@ Jede Antwort mit Marktdaten enthält einen `provenance`-Block:
 2. **Datenqualität:** Lückenprüfung gegen den XNYS-Kalender, Zeitstempel-Monotonie, OHLC-
    Konsistenz (`low ≤ open,close ≤ high`), Staleness (letzter Bar älter als erwartet?). Ergebnis
    ist ein `data_quality`-Block. Bei schweren Mängeln lautet das Ergebnis `insufficient_data`.
-3. **Multi-Timeframe:** Aus 1-Min-Bars werden 5m/15m/1h (Session-ausgerichtet) gebildet, aus
-   Tagesbars die Wochenbars. Pro Timeframe: Trend (EMA20/50-Lage + Steigung + Swing-Struktur
+3. **Multi-Timeframe:** Aus den 1-Min-Bars der regulären Handelszeit (RTH, ADR-0003) werden
+   5m/15m/1h (Session-ausgerichtet) gebildet, aus Tagesbars die Wochenbars. Extended Hours fließen
+   in Levels (PMH/PML), aktuellen Preis und Gap ein. Pro Timeframe: Trend (EMA20/50-Lage + Steigung + Swing-Struktur
    HH/HL vs. LH/LL), RSI, MACD-Histogramm, ATR.
 4. **Levels:** Swing-Hochs/-Tiefs aus 1h und Tageschart werden per ATR-Toleranz zu Zonen
    geclustert und nach Berührungen gewichtet. Dazu kommen PDH/PDL/PDC, Pre-Market-High/Low,
@@ -292,7 +293,15 @@ Push sind als weitere `Notifier` vorgesehen.
 | Secrets | nur Umgebungsvariablen/`.env` (gitignored), nie in Logs (Redaction-Filter) |
 | Doppelte Signale | UNIQUE `dedupe_key`, Cooldown |
 
-## 11. Umgebungen
+## 11. Sicherheit
+
+* Ports in Compose nur auf `127.0.0.1`, optionales `API_TOKEN` (Bearer; WebSocket per `?token=`),
+  CORS-Whitelist, Container laufen als Nicht-Root.
+* Externe URLs (News/Filings) werden nur als `http(s)` gespeichert und gerendert.
+* Prompt-Injection über Nachrichtentexte: Das LLM hat keine Werkzeuge, seine Ausgabe wird
+  validiert und kann keine Entscheidungen ändern (ADR-0004).
+
+## 12. Umgebungen
 
 `APP_ENV = development | test | production`.
 

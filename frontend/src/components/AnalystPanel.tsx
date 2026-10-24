@@ -1,7 +1,7 @@
 "use client";
 
 import type { Analysis, Factor } from "@/lib/api";
-import { OUTCOME_TONE, PHASE_LABEL, ago, dataKindLabel, fmtPrice, fmtTime } from "@/lib/format";
+import { OUTCOME_TONE, PHASE_LABEL, ago, dataKindLabel, fmtPrice, fmtTime, safeUrl } from "@/lib/format";
 
 function FactorRow({ f }: { f: Factor }) {
   return (
@@ -106,7 +106,7 @@ export function AnalystPanel({ analysis, loading, error, onAnalyze }: {
                   <li key={i}>
                     {src.type === "market_data"
                       ? `Marktdaten: ${src.provider} (${src.data_kind}) · Stand ${fmtTime(src.as_of, true)}`
-                      : src.url ? <a href={src.url} target="_blank" rel="noreferrer">{src.title}</a> : src.title}
+                      : safeUrl(src.url) ? <a href={safeUrl(src.url)!} target="_blank" rel="noopener noreferrer">{src.title}</a> : src.title}
                   </li>
                 ))}
               </ul>

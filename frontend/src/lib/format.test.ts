@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ago, dataKindLabel, fmtPct, fmtPrice, nyOffsetSeconds, toChartTime } from "./format";
+import { ago, dataKindLabel, fmtPct, fmtPrice, nyOffsetSeconds, safeUrl, toChartTime } from "./format";
 
 describe("time zone handling", () => {
   it("uses EDT (-4h) in October and EST (-5h) in December", () => {
@@ -34,5 +34,14 @@ describe("formatters", () => {
   it("formats relative time", () => {
     const now = Date.UTC(2026, 9, 22, 12, 0);
     expect(ago(new Date(now - 90_000).toISOString(), now)).toBe("vor 1 Min.");
+  });
+});
+
+describe("safeUrl", () => {
+  it("rejects script URLs and accepts https", () => {
+    expect(safeUrl("javascript:alert(1)")).toBeNull();
+    expect(safeUrl("data:text/html,<b>x</b>")).toBeNull();
+    expect(safeUrl("not a url")).toBeNull();
+    expect(safeUrl("https://www.sec.gov/x")).toBe("https://www.sec.gov/x");
   });
 });

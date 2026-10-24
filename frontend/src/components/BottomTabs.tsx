@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api, type Analysis, type NewsItem, type Performance, type Similarity } from "@/lib/api";
-import { OUTCOME_TONE, ago, fmtPct, fmtPrice, fmtTime } from "@/lib/format";
+import { OUTCOME_TONE, ago, fmtPct, fmtPrice, fmtTime, safeUrl } from "@/lib/format";
 
 type Tab = "news" | "history" | "signals" | "performance";
 
@@ -50,7 +50,7 @@ function NewsTab({ symbol, refreshKey }: { symbol: string; refreshKey: number })
         return (
           <div key={n.id} className="news-item">
             <div>
-              {n.url ? <a href={n.url} target="_blank" rel="noreferrer">{n.headline}</a> : n.headline}
+              {safeUrl(n.url) ? <a href={safeUrl(n.url)!} target="_blank" rel="noopener noreferrer">{n.headline}</a> : n.headline}
               {n.is_duplicate && <span className="badge tone-muted" style={{ marginLeft: 6 }}>Duplikat</span>}
             </div>
             <div className="meta">

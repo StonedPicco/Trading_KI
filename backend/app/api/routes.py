@@ -262,6 +262,11 @@ def _analysis_out(
 async def analyze(
     symbol: str = Depends(symbol_param), c: Container = Depends(container)
 ) -> dict[str, Any]:
+    # Analyses cost seconds of CPU: repeated clicks within 10 s return the fresh result.
+    async with c.db.session() as s:
+        recent = await repo.latest_analysis(s, symbol)
+    if recent is not None and (utcnow() - recent.created_at).total_seconds() < 10:
+        return _analysis_out(recent)
     row = await c.analysis.analyze(symbol, trigger="manual")
     return _analysis_out(row)
 

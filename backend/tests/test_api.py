@@ -118,10 +118,13 @@ async def test_full_analysis_is_stored_immutably(client: httpx.AsyncClient) -> N
 
 async def test_analysis_is_reproducible_for_same_inputs(client: httpx.AsyncClient) -> None:
     a = (await client.post("/api/symbols/AAPL/analyze")).json()
-    b = (await client.post("/api/symbols/AAPL/analyze")).json()
-    assert a["id"] != b["id"]
-    assert a["input_hash"] == b["input_hash"]
-    assert a["scenario"] == b["scenario"] or b["outcome"] == "invalidated"
+    # a second click within 10 s returns the same stored analysis (CPU guard)
+    assert (await client.post("/api/symbols/AAPL/analyze")).json()["id"] == a["id"]
+    container = client.app.state.container  # type: ignore[attr-defined]
+    b = await container.analysis.analyze("AAPL", trigger="test")
+    assert str(b.id) != a["id"]
+    assert b.input_hash == a["input_hash"]
+    assert b.scenario == a["scenario"] or b.outcome == "invalidated"
 
 
 async def test_notifications_are_deduplicated(client: httpx.AsyncClient) -> None:

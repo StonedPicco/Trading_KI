@@ -137,7 +137,9 @@ class NewsService:
                         first_seen_at=now,
                         headline=item.headline,
                         summary=item.summary or (item.content[:600] if item.content else None),
-                        url=item.url,
+                        url=item.url
+                        if (item.url or "").startswith(("https://", "http://"))
+                        else None,
                         symbols=item.symbols,
                         content_hash=h,
                         duplicate_of=dup.id if dup and dup.id != item.id else None,
