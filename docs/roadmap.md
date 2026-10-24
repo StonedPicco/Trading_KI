@@ -3,6 +3,22 @@
 Priorisierung nach Nutzen für das eigentliche Ziel: belastbar bessere Einschätzungen als einfache
 Referenzmethoden. Vor neuen Features steht der Nachweis mit echten Daten.
 
+## MVP-Implementierungsplan (umgesetzt in `feature/mvp`)
+
+| # | Schritt | Ergebnis |
+|---|---|---|
+| 1 | Recherche & Architektur | `docs/research.md`, `docs/architecture.md`, ADRs |
+| 2 | Kern: Konfiguration, Logging, Börsenkalender, Domänentypen | `app/core`, `app/domain` |
+| 3 | Provider: Alpaca (REST/News/WS), Demo, SEC | `app/providers` |
+| 4 | Analyse: Indikatoren → Struktur → Kontext → MTF → Ähnlichkeit → Pipeline | `app/analysis` |
+| 5 | Signal-Engine | `app/signals/engine.py` |
+| 6 | Persistenz (SQLAlchemy, Alembic, Trigger), Cache | `app/db`, `services/market_data.py` |
+| 7 | LLM-Schicht mit Validator, News-Pipeline | `app/llm`, `app/news` |
+| 8 | Orchestrierung, Monitor/Trigger, Benachrichtigungen, Auswertung, Backtest | `app/services`, `app/backtest` |
+| 9 | API + WebSocket, Worker | `app/api`, `app/main.py`, `app/workers` |
+| 10 | Dashboard | `frontend/` |
+| 11 | Tests, CI, Docker, Doku, Validierung | `tests/`, `.github/`, `docker-compose.yml`, `docs/validation.md` |
+
 ## P0 – Sofort (vor ernsthafter Nutzung)
 
 1. **Erster Live-Test mit Alpaca-Keys** (kostenlos): Endpunkte, Paging, Daily-Bar-Zeitstempel,
