@@ -27,15 +27,18 @@ def make_minute_bars(
     closes = np.asarray(closes, dtype=float)
     idx = pd.date_range(start, periods=len(closes), freq="1min", tz="UTC", name="ts")
     opens = np.concatenate([[closes[0]], closes[:-1]])
-    df = pd.DataFrame({
-        "open": opens,
-        "high": np.maximum(opens, closes) + wick,
-        "low": np.minimum(opens, closes) - wick,
-        "close": closes,
-        "volume": np.full(len(closes), volume),
-        "vwap": (opens + closes) / 2,
-        "trade_count": np.full(len(closes), 10.0),
-    }, index=idx)
+    df = pd.DataFrame(
+        {
+            "open": opens,
+            "high": np.maximum(opens, closes) + wick,
+            "low": np.minimum(opens, closes) - wick,
+            "close": closes,
+            "volume": np.full(len(closes), volume),
+            "vwap": (opens + closes) / 2,
+            "trade_count": np.full(len(closes), 10.0),
+        },
+        index=idx,
+    )
     return df[BAR_COLUMNS]
 
 
@@ -60,10 +63,16 @@ def regular_session_frame(
 def daily_from_minutes(minute: pd.DataFrame) -> pd.DataFrame:
     local = minute.index.tz_convert("America/New_York")
     g = minute.groupby(local.date)
-    out = pd.DataFrame({
-        "open": g["open"].first(), "high": g["high"].max(), "low": g["low"].min(),
-        "close": g["close"].last(), "volume": g["volume"].sum(), "vwap": g["vwap"].mean(),
-        "trade_count": g["trade_count"].sum(),
-    })
+    out = pd.DataFrame(
+        {
+            "open": g["open"].first(),
+            "high": g["high"].max(),
+            "low": g["low"].min(),
+            "close": g["close"].last(),
+            "volume": g["volume"].sum(),
+            "vwap": g["vwap"].mean(),
+            "trade_count": g["trade_count"].sum(),
+        }
+    )
     out.index = pd.DatetimeIndex(pd.to_datetime(out.index).tz_localize("UTC"), name="ts")
     return out[BAR_COLUMNS]

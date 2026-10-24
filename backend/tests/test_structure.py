@@ -65,8 +65,9 @@ def test_breakout_and_false_breakout_detection() -> None:
 
 
 def test_gap_analysis() -> None:
-    kl = st.KeyLevels(prev_day_close=100.0, session_open=102.0, session_low=99.5,
-                      session_high=103.0)
+    kl = st.KeyLevels(
+        prev_day_close=100.0, session_open=102.0, session_low=99.5, session_high=103.0
+    )
     gap = st.gap_analysis(kl, daily_atr=2.0)
     assert gap is not None
     assert gap.direction == "up" and gap.gap_pct == 2.0 and gap.gap_atr == 1.0

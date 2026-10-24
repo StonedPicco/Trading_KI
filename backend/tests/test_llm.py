@@ -12,20 +12,44 @@ from app.llm.null_client import deterministic_narrative
 from app.llm.schemas import AnalystNarrative, NewsAssessment, strict_json_schema
 from app.llm.validator import validate_narrative
 
-FACTS = {"symbol": "TEST", "price": 187.42, "key_levels": {"prev_day_high": 189.5},
-         "provenance": {"data_kind": "live"}}
-SCENARIO = {"label": "Bullisches Setup", "reference_price": 187.42, "entry_zone": [186.9, 187.5],
-            "stop": 185.8, "targets": [189.5, 191.2], "reward_risk": 2.1, "reasons": ["x"],
-            "factors_for": [], "factors_against": [], "risks": []}
-NEWS = [{"id": "alpaca:1", "headline": "Acme raises full-year guidance",
-         "summary": "Acme now expects revenue of $12 billion.", "content": None}]
+FACTS = {
+    "symbol": "TEST",
+    "price": 187.42,
+    "key_levels": {"prev_day_high": 189.5},
+    "provenance": {"data_kind": "live"},
+}
+SCENARIO = {
+    "label": "Bullisches Setup",
+    "reference_price": 187.42,
+    "entry_zone": [186.9, 187.5],
+    "stop": 185.8,
+    "targets": [189.5, 191.2],
+    "reward_risk": 2.1,
+    "reasons": ["x"],
+    "factors_for": [],
+    "factors_against": [],
+    "risks": [],
+}
+NEWS = [
+    {
+        "id": "alpaca:1",
+        "headline": "Acme raises full-year guidance",
+        "summary": "Acme now expects revenue of $12 billion.",
+        "content": None,
+    }
+]
 
 
 def narrative(**kw: Any) -> AnalystNarrative:
     base: dict[str, Any] = dict(
-        summary="Kurs 187.42 nahe Widerstand 189.5; Stop 185.8.", bull_case=["Trend intakt"],
-        bear_case=["Widerstand"], key_risks=["Volatilität"], market_context="neutral",
-        news_assessments=[], engine_agreement="agree", disagreement_reason="",
+        summary="Kurs 187.42 nahe Widerstand 189.5; Stop 185.8.",
+        bull_case=["Trend intakt"],
+        bear_case=["Widerstand"],
+        key_risks=["Volatilität"],
+        market_context="neutral",
+        news_assessments=[],
+        engine_agreement="agree",
+        disagreement_reason="",
         uncertainty=[],
     )
     base.update(kw)
@@ -56,26 +80,34 @@ def test_validator_accepts_grounded_numbers() -> None:
 
 
 def test_validator_rejects_hallucinated_price() -> None:
-    _, report = validate_narrative(narrative(summary="Kursziel 250.00 sehr wahrscheinlich."),
-                                   FACTS, SCENARIO, NEWS)
+    _, report = validate_narrative(
+        narrative(summary="Kursziel 250.00 sehr wahrscheinlich."), FACTS, SCENARIO, NEWS
+    )
     assert not report.ok
     assert any("250" in e for e in report.errors)
 
 
 def test_validator_rejects_certainty_language() -> None:
-    _, report = validate_narrative(narrative(summary="Ein garantierter Gewinn."), FACTS,
-                                   SCENARIO, NEWS)
+    _, report = validate_narrative(
+        narrative(summary="Ein garantierter Gewinn."), FACTS, SCENARIO, NEWS
+    )
     assert not report.ok
 
 
 def test_validator_strips_non_verbatim_news_facts_and_unknown_ids() -> None:
-    good = NewsAssessment(news_id="alpaca:1", category="guidance", relevance="high",
-                          direction="bullish", is_new_information=True,
-                          verifiable_facts=["expects revenue of $12 billion", "CEO resigned"],
-                          reasoning="Prognose angehoben")
+    good = NewsAssessment(
+        news_id="alpaca:1",
+        category="guidance",
+        relevance="high",
+        direction="bullish",
+        is_new_information=True,
+        verifiable_facts=["expects revenue of $12 billion", "CEO resigned"],
+        reasoning="Prognose angehoben",
+    )
     bad = good.model_copy(update={"news_id": "alpaca:999"})
-    cleaned, report = validate_narrative(narrative(news_assessments=[good, bad]), FACTS,
-                                         SCENARIO, NEWS)
+    cleaned, report = validate_narrative(
+        narrative(news_assessments=[good, bad]), FACTS, SCENARIO, NEWS
+    )
     assert cleaned.news_assessments[0].verifiable_facts == ["expects revenue of $12 billion"]
     assert any("alpaca:999" in e for e in report.errors)
 
@@ -99,7 +131,8 @@ class _FakeMessages:
 
 def _fake_client(text: str, stop_reason: str = "end_turn") -> tuple[Any, _FakeMessages]:
     resp = SimpleNamespace(
-        stop_reason=stop_reason, model="claude-opus-5-5",
+        stop_reason=stop_reason,
+        model="claude-opus-5-5",
         content=[SimpleNamespace(type="text", text=text)],
         usage=SimpleNamespace(input_tokens=6000, output_tokens=1500),
     )

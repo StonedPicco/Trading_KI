@@ -39,8 +39,10 @@ def test_price_reaction_measures_excess_return_and_volume() -> None:
 
 def test_price_reaction_pending_without_later_bars() -> None:
     before = make_minute_bars(np.full(10, 100.0), T0 - pd.Timedelta(minutes=10))
-    assert price_reaction(before, None, T0) == {"status": "pending",
-                                                "note": "noch keine Kursdaten nach Veröffentlichung"}
+    assert price_reaction(before, None, T0) == {
+        "status": "pending",
+        "note": "noch keine Kursdaten nach Veröffentlichung",
+    }
 
 
 def test_trade_simulation_is_conservative_when_stop_and_target_in_same_bar() -> None:
@@ -68,7 +70,7 @@ def test_simulator_has_no_systematic_bias_on_random_walk() -> None:
         price = float(closes[0])
         sign = int(rng.choice([-1, 1]))
         stop, target = price - sign * 0.5, price + sign * 1.0
-        res, entry, exit_ = simulate(bars.iloc[1:], sign, (price, price), stop, target)
+        _res, entry, exit_ = simulate(bars.iloc[1:], sign, (price, price), stop, target)
         if entry is not None and exit_ is not None:
             g, _ = _r(sign, entry, exit_, stop, CostModel(0, 0))
             rs.append(g)
@@ -84,11 +86,23 @@ def test_costs_reduce_r() -> None:
 
 def _analysis(**kw: object) -> AnalysisRow:
     base: dict[str, object] = dict(
-        id=uuid.uuid4(), symbol="TEST", created_at=T0, data_as_of=T0, trigger="t",
-        outcome="long_entry", bias="long", reference_price=100.0, market_phase="regular",
-        data_kind="historical", scenario={"entry_zone": [99.8, 100.2], "stop": 99.0,
-                                          "targets": [102.0]},
-        facts={}, narrative={}, provenance={}, sources=[], input_hash="x", engine_version="0",
+        id=uuid.uuid4(),
+        symbol="TEST",
+        created_at=T0,
+        data_as_of=T0,
+        trigger="t",
+        outcome="long_entry",
+        bias="long",
+        reference_price=100.0,
+        market_phase="regular",
+        data_kind="historical",
+        scenario={"entry_zone": [99.8, 100.2], "stop": 99.0, "targets": [102.0]},
+        facts={},
+        narrative={},
+        provenance={},
+        sources=[],
+        input_hash="x",
+        engine_version="0",
     )
     base.update(kw)
     return AnalysisRow(**base)
@@ -111,7 +125,8 @@ def test_monitor_detects_breakout_and_invalidation() -> None:
     minute = regular_session_frame(3, datetime(2026, 10, 22, 20, 0, tzinfo=UTC))
     close = float(minute["close"].iloc[-1])
     last = {
-        "id": "a1", "reference_price": close - 1.0,
+        "id": "a1",
+        "reference_price": close - 1.0,
         "facts": {"zones": [{"low": close - 0.8, "high": close - 0.5, "strength": 3}]},
         "scenario": {"bias": "short", "invalidation_price": close - 0.2},
     }

@@ -48,7 +48,8 @@ def test_feature_table_is_causal(data: SymbolData) -> None:
 
 def test_compute_facts_identical_with_or_without_future_data(data: SymbolData) -> None:
     truncated_input = SymbolData(
-        "TEST", data.minute[data.minute.index < AS_OF],
+        "TEST",
+        data.minute[data.minute.index < AS_OF],
         data.daily[data.daily.index.date < AS_OF.date()],
     )
     f_future = compute_facts(FactInputs(data, None, None, AS_OF, PROV))

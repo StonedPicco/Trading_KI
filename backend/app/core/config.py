@@ -8,7 +8,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -59,6 +59,18 @@ class Settings(BaseSettings):
     calibration_min_samples: int = 50
     similarity_min_samples: int = 30
     min_reward_risk: float = 1.5
+
+    @field_validator(
+        "alpaca_api_key_id",
+        "alpaca_api_secret_key",
+        "anthropic_api_key",
+        "api_token",
+        "sec_user_agent",
+        mode="before",
+    )
+    @classmethod
+    def _empty_to_none(cls, v: object) -> object:
+        return None if isinstance(v, str) and not v.strip() else v
 
     @model_validator(mode="after")
     def _production_guards(self) -> Settings:

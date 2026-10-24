@@ -50,4 +50,4 @@ def test_trading_days_back() -> None:
 
 def test_naive_datetime_rejected() -> None:
     with pytest.raises(ValueError):
-        market_phase(datetime(2026, 10, 22, 15, 0))  # noqa: DTZ001
+        market_phase(datetime(2026, 10, 22, 15, 0))

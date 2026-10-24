@@ -20,9 +20,14 @@ from app.providers.demo import DemoMarketData
 
 def _settings(tmp_path: Path, **kw: object) -> Settings:
     return Settings(
-        app_env="test", database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
-        data_provider="demo", similarity_lookback_days=40, intraday_lookback_days=25,
-        daily_lookback_days=400, default_watchlist=["AAPL"], **kw,  # type: ignore[arg-type]
+        app_env="test",
+        database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
+        data_provider="demo",
+        similarity_lookback_days=40,
+        intraday_lookback_days=25,
+        daily_lookback_days=400,
+        default_watchlist=["AAPL"],
+        **kw,  # type: ignore[arg-type]
     )
 
 
@@ -31,9 +36,10 @@ async def client(tmp_path: Path, fixed_clock: datetime) -> AsyncIterator[httpx.A
     settings = _settings(tmp_path)
     container = build_container(settings, provider=DemoMarketData())
     app = create_app(settings, container)
-    async with LifespanManager(app), httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with (
+        LifespanManager(app),
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c,
+    ):
         c.app = app  # type: ignore[attr-defined]
         yield c
 
@@ -71,8 +77,16 @@ async def test_full_analysis_is_stored_immutably(client: httpx.AsyncClient) -> N
     assert r.status_code == 200, r.text
     a = r.json()
     assert a["data_kind"] == "demo"
-    assert a["outcome"] in {"bullish_setup", "bearish_setup", "long_entry", "short_entry",
-                            "watch", "no_trade", "insufficient_data", "invalidated"}
+    assert a["outcome"] in {
+        "bullish_setup",
+        "bearish_setup",
+        "long_entry",
+        "short_entry",
+        "watch",
+        "no_trade",
+        "insufficient_data",
+        "invalidated",
+    }
     assert a["narrative"]["meta"]["generated_by"] == "deterministic"
     assert a["narrative"]["uncertainty"][0].startswith("DEMO-DATEN")
     assert len(a["input_hash"]) == 64
@@ -138,9 +152,10 @@ async def test_news_endpoint_without_providers(client: httpx.AsyncClient) -> Non
 async def test_api_token_enforced(tmp_path: Path, fixed_clock: datetime) -> None:
     settings = _settings(tmp_path, api_token=SecretStr("s3cret"))
     app = create_app(settings, build_container(settings, provider=DemoMarketData()))
-    async with LifespanManager(app), httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with (
+        LifespanManager(app),
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c,
+    ):
         assert (await c.get("/api/watchlist")).status_code == 401
         ok = await c.get("/api/watchlist", headers={"Authorization": "Bearer s3cret"})
         assert ok.status_code == 200
@@ -149,5 +164,9 @@ async def test_api_token_enforced(tmp_path: Path, fixed_clock: datetime) -> None
 
 def test_production_guards() -> None:
     with pytest.raises(ValueError, match="demo"):
-        Settings(app_env="production", data_provider="demo", run_worker_in_api=False,
-                 database_url="postgresql+asyncpg://x/y")
+        Settings(
+            app_env="production",
+            data_provider="demo",
+            run_worker_in_api=False,
+            database_url="postgresql+asyncpg://x/y",
+        )

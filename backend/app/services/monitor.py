@@ -176,6 +176,8 @@ class MonitorService:
                 fired[symbol] = await self._check(symbol, spy, now, phase)
             except Exception as exc:
                 log.exception("monitor check failed", extra={"symbol": symbol, "error": str(exc)})
+        async with self.db.session() as s:  # lets dashboards refresh charts without polling
+            await repo.add_event(s, "bars.updated", {"symbols": symbols, "as_of": now.isoformat()})
         return fired
 
     async def _check(

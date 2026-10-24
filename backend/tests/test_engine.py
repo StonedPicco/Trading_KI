@@ -6,13 +6,21 @@ from app.signals.engine import Outcome, build_scenario
 
 
 def _trend(direction: str, close: float = 100.0) -> dict[str, Any]:
-    return {"direction": direction, "structure": "HH_HL" if direction == "up" else "LH_LL",
-            "close": close, "ema20": close, "ema50": close, "bars": 500}
+    return {
+        "direction": direction,
+        "structure": "HH_HL" if direction == "up" else "LH_LL",
+        "close": close,
+        "ema20": close,
+        "ema50": close,
+        "bars": 500,
+    }
 
 
 def bullish_facts(**overrides: Any) -> dict[str, Any]:
     facts: dict[str, Any] = {
-        "symbol": "TEST", "price": 100.0, "market_phase": "regular",
+        "symbol": "TEST",
+        "price": 100.0,
+        "market_phase": "regular",
         "data_quality": {"ok": True, "issues": [], "info": []},
         "trends": {tf: _trend("up") for tf in ("1Week", "1Day", "1Hour", "15Min", "5Min")},
         "intraday": {"vwap": 99.6, "atr_5m": 0.4, "rsi_5m": 60.0},
@@ -52,11 +60,16 @@ def test_bullish_alignment_produces_long_with_consistent_levels() -> None:
 
 def test_no_evidence_means_no_trade() -> None:
     flat = {tf: _trend("sideways") for tf in ("1Week", "1Day", "1Hour", "15Min", "5Min")}
-    sc = build_scenario(bullish_facts(
-        trends=flat, intraday={"vwap": 100.0, "atr_5m": 0.4, "rsi_5m": 50},
-        relative_strength={}, market_trend_5m="sideways",
-        zones=[], key_levels={},
-    ))
+    sc = build_scenario(
+        bullish_facts(
+            trends=flat,
+            intraday={"vwap": 100.0, "atr_5m": 0.4, "rsi_5m": 50},
+            relative_strength={},
+            market_trend_5m="sideways",
+            zones=[],
+            key_levels={},
+        )
+    )
     assert sc.outcome == Outcome.NO_TRADE
     assert sc.bias == "neutral"
 
@@ -72,9 +85,15 @@ def test_mtf_conflict_downgrades_entry_to_setup() -> None:
 
 def test_poor_reward_risk_yields_watch() -> None:
     # resistance right above the price -> first target too close
-    sc = build_scenario(bullish_facts(zones=[{"low": 98.9, "high": 99.1, "strength": 3},
-                                             {"low": 100.2, "high": 100.3, "strength": 3}],
-                                      key_levels={}))
+    sc = build_scenario(
+        bullish_facts(
+            zones=[
+                {"low": 98.9, "high": 99.1, "strength": 3},
+                {"low": 100.2, "high": 100.3, "strength": 3},
+            ],
+            key_levels={},
+        )
+    )
     assert sc.outcome == Outcome.WATCH
     assert sc.reward_risk is not None and sc.reward_risk < 1.5
 
@@ -92,14 +111,19 @@ def test_previous_long_is_invalidated_when_stop_breached() -> None:
 
 def test_bearish_mirror_produces_short_levels() -> None:
     trends = {tf: _trend("down") for tf in ("1Week", "1Day", "1Hour", "15Min", "5Min")}
-    sc = build_scenario(bullish_facts(
-        trends=trends, intraday={"vwap": 100.4, "atr_5m": 0.4, "rsi_5m": 40},
-        relative_strength={"market": {"benchmark": "SPY", "rs_intraday": -1.0}},
-        market_trend_5m="down",
-        zones=[{"low": 100.9, "high": 101.1, "strength": 3},
-               {"low": 97.2, "high": 97.6, "strength": 3}],
-        key_levels={"prev_day_low": 98.4},
-    ))
+    sc = build_scenario(
+        bullish_facts(
+            trends=trends,
+            intraday={"vwap": 100.4, "atr_5m": 0.4, "rsi_5m": 40},
+            relative_strength={"market": {"benchmark": "SPY", "rs_intraday": -1.0}},
+            market_trend_5m="down",
+            zones=[
+                {"low": 100.9, "high": 101.1, "strength": 3},
+                {"low": 97.2, "high": 97.6, "strength": 3},
+            ],
+            key_levels={"prev_day_low": 98.4},
+        )
+    )
     assert sc.bias == "short"
     assert sc.entry_zone is not None and sc.stop is not None
     assert sc.targets[0] < sc.entry_zone[0] <= sc.entry_zone[1] < sc.stop

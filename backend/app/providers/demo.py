@@ -105,8 +105,8 @@ def _intraday_day(symbol: str, day: date) -> pd.DataFrame:
     high = np.maximum(open_, close) + wick
     low = np.minimum(open_, close) - np.abs(rng.normal(0, step * 0.6)) * close
 
-    minute_of_session = np.clip((idx - st.open).total_seconds() / 60.0, 0, None)
     session_len = max(n_reg, 1)
+    minute_of_session = np.clip((idx - st.open).total_seconds() / 60.0, 0, session_len)
     u_shape = (
         1.0
         + 3.0 * np.exp(-minute_of_session / 25)

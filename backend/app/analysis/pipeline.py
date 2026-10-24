@@ -161,7 +161,14 @@ def compute_facts(inp: FactInputs) -> dict[str, Any]:
         facts["data_quality"]["ok"] = False
         return facts
 
-    tfs = build_timeframes(tgt.minute, tgt.daily)
+    # Intraday indicators/trends use the regular session (RTH) only: thin extended-hours trading
+    # distorts ATR, RSI and structure. Extended hours still feed key levels (PM high/low) and price.
+    rth_minute = tgt.minute[regular_session_mask(tgt.minute.index)]
+    if rth_minute.empty:
+        facts["data_quality"]["ok"] = False
+        facts["data_quality"]["issues"].append("keine Daten der regulären Handelszeit")
+        return facts
+    tfs = build_timeframes(rth_minute, tgt.daily)
     facts["trends"] = {
         tf.value: structure.assess_trend(df, tf.value).to_dict()
         for tf, df in tfs.items()
@@ -171,7 +178,7 @@ def compute_facts(inp: FactInputs) -> dict[str, Any]:
     m5 = tfs[Timeframe.M5]
     m15 = tfs[Timeframe.M15]
     price = facts["price"]
-    vwap_series = session_vwap(tgt.minute)
+    vwap_series = session_vwap(rth_minute)
     rv5 = relative_volume(m5)
     a5 = atr(m5)
     bb = bollinger(m5["close"])
@@ -228,7 +235,8 @@ def compute_facts(inp: FactInputs) -> dict[str, Any]:
         rs["market"] = context.relative_strength(
             mkt.symbol, tgt.minute, tgt.daily, mkt.minute, mkt.daily, session
         ).to_dict()
-        mkt_m5 = build_timeframes(mkt.minute, mkt.daily)[Timeframe.M5]
+        mkt_rth = mkt.minute[regular_session_mask(mkt.minute.index)]
+        mkt_m5 = build_timeframes(mkt_rth, mkt.daily)[Timeframe.M5]
         facts["market_trend_5m"] = structure.assess_trend(mkt_m5, "5Min").direction
     if sec and not sec.minute.empty:
         rs["sector"] = context.relative_strength(

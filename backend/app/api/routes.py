@@ -104,16 +104,19 @@ async def watchlist_overview(c: Container = Depends(container)) -> list[dict[str
             continue
         if not minute.empty:
             last = float(minute["close"].iloc[-1])
-            prev = daily[daily.index.date < ny_date(now)]
+            # Reference session = session of the latest bar (weekends/holidays: last session).
+            session = ny_date(minute.index[-1].to_pydatetime())
+            prev = daily[daily.index.date < session]
             prev_close = float(prev["close"].iloc[-1]) if not prev.empty else None
             local = minute.index.tz_convert("America/New_York").date
-            today = minute[local == ny_date(now)]
+            today = minute[local == session]
             rv = relative_volume(minute.iloc[-390 * 22 :])["rvol_cum"].dropna()
             item.update(
                 {
                     "price": last,
                     "prev_close": prev_close,
                     "change_pct": round((last / prev_close - 1) * 100, 3) if prev_close else None,
+                    "session": session.isoformat(),
                     "volume_today": float(today["volume"].sum()) if not today.empty else 0.0,
                     "rvol": round(float(rv.iloc[-1]), 2) if len(rv) else None,
                     "last_bar": minute.index[-1].isoformat(),
@@ -148,9 +151,16 @@ async def _bars(c: Container, symbol: str, tf: Timeframe, days: int) -> tuple[pd
     return df, df.index[0] if len(df) else None
 
 
-def _series(s: pd.Series, start: Any) -> list[dict[str, float]]:
-    s = s[s.index >= start].dropna()
-    return [{"time": int(ts.timestamp()), "value": round(float(v), 4)} for ts, v in s.items()]
+def _series(s: pd.Series, start: Any, keep_gaps: bool = False) -> list[dict[str, Any]]:
+    """Chart points from ``start``. With ``keep_gaps`` NaNs become ``value: null`` so the chart
+    can break the line (e.g. session-anchored VWAP between sessions)."""
+    s = s[s.index >= start]
+    if not keep_gaps:
+        s = s.dropna()
+    return [
+        {"time": int(ts.timestamp()), "value": None if pd.isna(v) else round(float(v), 4)}
+        for ts, v in s.items()
+    ]
 
 
 @router.get("/symbols/{symbol}/bars")
@@ -203,7 +213,7 @@ async def get_indicators(
         "macd_hist": _series(m["hist"], start),
     }
     if tf.is_intraday:
-        series["vwap"] = _series(session_vwap(df), start)
+        series["vwap"] = _series(session_vwap(df), start, keep_gaps=True)
     return {"symbol": symbol, "timeframe": tf.value, "series": series}
 
 

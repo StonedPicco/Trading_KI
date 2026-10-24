@@ -32,8 +32,9 @@ class FakeProvider:
         self.calls: list[tuple[str, datetime, datetime]] = []
 
     def provenance(self, timeframe: Timeframe, as_of: datetime | None = None) -> Provenance:
-        return Provenance(provider="fake", feed="iex", data_kind=DataKind.LIVE, is_realtime=True,
-                          as_of=as_of)
+        return Provenance(
+            provider="fake", feed="iex", data_kind=DataKind.LIVE, is_realtime=True, as_of=as_of
+        )
 
     async def get_bars(
         self, symbol: str, timeframe: Timeframe, start: datetime, end: datetime
