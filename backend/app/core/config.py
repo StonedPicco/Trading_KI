@@ -6,14 +6,23 @@ Secrets are typed as ``SecretStr`` so they never appear in reprs or logs.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Repository root (backend/app/core/config.py -> parents[3]); env files are looked up there so the
+# one-click start works regardless of the working directory. Missing files are ignored.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+# Later files override earlier ones; real environment variables override all files.
+# config/alpaca.env is written by the start scripts on first launch (gitignored).
+ENV_FILES = (PROJECT_ROOT / "config" / "alpaca.env", PROJECT_ROOT / ".env", Path(".env"))
+
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_FILES, extra="ignore")
 
     app_env: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"

@@ -28,7 +28,22 @@ Short, Beobachten oder ausdrücklich *kein Trade*.
 
 ## Schnellstart
 
-### Variante A – Docker Compose (empfohlen)
+### Variante 0 – Doppelklick (ohne Vorkenntnisse)
+
+1. Auf GitHub **Code → Download ZIP** klicken und die ZIP-Datei entpacken.
+2. Im entpackten Ordner doppelklicken auf:
+   - **Windows:** `Start.bat`
+   - **macOS:** `Start.command` (beim ersten Mal: Rechtsklick → „Öffnen“ → „Öffnen“ bestätigen)
+   - **Linux:** `./start.sh`
+3. Beim **ersten Start** fragt das Fenster einmalig nach den Alpaca-Keys (API Key ID und Secret).
+   Sie werden nur lokal in `config/alpaca.env` gespeichert. Leer lassen = Demo-Modus.
+4. Der erste Start dauert einige Minuten (Python und Pakete werden automatisch installiert),
+   danach öffnet sich das Dashboard im Browser: http://127.0.0.1:8000
+
+Das Fenster muss offen bleiben, solange ihr die Plattform nutzt; Schließen beendet sie.
+Voraussetzung ist nur eine Internetverbindung, Node.js oder Docker werden nicht benötigt.
+
+### Variante A – Docker Compose
 
 ```bash
 cp .env.example .env          # optional: Alpaca-Keys eintragen, sonst Demo-Modus
@@ -79,6 +94,7 @@ zeigt diesen Hinweis an. Für konsolidierte Echtzeitdaten gibt es Alpaca Algo Tr
 | Worker separat | `uv run python -m app.workers.scheduler` |
 | Backtest | `uv run python -m app.backtest --symbol AAPL --start 2026-09-01 --end 2026-10-15 --provider auto` |
 | Frontend prüfen | `cd frontend && npm run typecheck && npm test && npm run build` |
+| Dashboard für den Doppelklick-Start neu bauen | `cd frontend && npm run build:web` (Ergebnis `web/` committen) |
 
 ## Dokumentation
 
