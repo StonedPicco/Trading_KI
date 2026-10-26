@@ -51,6 +51,9 @@ frontend/src/    app/page.tsx (Dashboard), components/*, lib/api.ts (Typen), lib
 - Migration: `uv run alembic revision --autogenerate -m "…"` → Migration prüfen → `alembic upgrade head`
   (Datentypen in Migrationen als `sa.DateTime(timezone=True)` statt App-Typen)
 - Frontend: `cd frontend && npm run typecheck && npm test && npm run build`
+- Nach Frontend-Änderungen `npm run build:web` ausführen und `web/` mitcommitten: Der
+  Doppelklick-Start (`Start.bat`, `start.sh`) liefert das Dashboard aus `web/` ohne Node.js aus.
+- Keys niemals committen; der Doppelklick-Start speichert sie im gitignorten `config/alpaca.env`.
 - Vor jedem PR: alle obigen Checks grün (CI prüft dasselbe inkl. PostgreSQL)
 
 ## Konventionen
