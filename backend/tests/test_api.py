@@ -173,3 +173,21 @@ def test_production_guards() -> None:
             run_worker_in_api=False,
             database_url="postgresql+asyncpg://x/y",
         )
+
+
+async def test_static_dashboard_served_from_same_origin(client: httpx.AsyncClient) -> None:
+    r = await client.get("/")
+    assert r.status_code == 200
+    assert "ATI Terminal" in r.text
+    assert (await client.get("/api/health")).json()["status"] == "ok"  # API keeps precedence
+
+
+def test_env_files_resolve_from_project_root(tmp_path: Path) -> None:
+    from app.core.config import ENV_FILES, PROJECT_ROOT
+
+    assert ENV_FILES[0] == PROJECT_ROOT / "config" / "alpaca.env"
+    assert (PROJECT_ROOT / "backend" / "app").is_dir()
+    keys = tmp_path / "alpaca.env"
+    keys.write_text("ALPACA_API_KEY_ID=PKTEST\nALPACA_API_SECRET_KEY=secret\n")
+    s = Settings(_env_file=(keys,), app_env="test")  # type: ignore[call-arg]
+    assert s.resolved_data_provider() == "alpaca"

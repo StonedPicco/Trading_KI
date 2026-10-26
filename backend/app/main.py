@@ -13,10 +13,11 @@ from typing import Any
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router
 from app.container import Container, build_container
-from app.core.config import Settings, get_settings
+from app.core.config import PROJECT_ROOT, Settings, get_settings
 from app.core.errors import AppError, ProviderError
 from app.core.jsonsafe import to_jsonable
 from app.core.logging import configure_logging
@@ -155,6 +156,12 @@ def create_app(settings: Settings | None = None, container: Container | None = N
             pass
         finally:
             hub.clients.discard(websocket)
+
+    # One-click start: serve the prebuilt static dashboard (web/, frontend/scripts/build-web.mjs)
+    # from the same origin. Mounted last so /api and /ws keep precedence.
+    web_dir = PROJECT_ROOT / "web"
+    if (web_dir / "index.html").is_file():
+        app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")
 
     return app
 

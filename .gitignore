@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!frontend/.env.development
 *.pem
 *.key
 
@@ -40,3 +41,6 @@ npm-debug.log*
 !.vscode/extensions.json
 .DS_Store
 Thumbs.db
+
+# One-click start: local keys (data/ is ignored above)
+config/alpaca.env

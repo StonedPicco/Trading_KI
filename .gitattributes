@@ -1,0 +1,4 @@
+# Windows scripts need CRLF; shell scripts need LF (also applies to GitHub "Download ZIP").
+*.bat text eol=crlf
+*.sh text eol=lf
+*.command text eol=lf

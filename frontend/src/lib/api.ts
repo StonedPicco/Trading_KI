@@ -1,6 +1,8 @@
 // Typed client for the backend REST API. All market data carries provenance (live/delayed/demo).
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Empty = same origin (the one-click start serves the dashboard from the API server).
+// `npm run dev` sets NEXT_PUBLIC_API_URL via .env.development.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN;
 
 export type DataKind = "live" | "delayed" | "historical" | "demo";
@@ -279,6 +281,8 @@ export const api = {
 };
 
 export function wsUrl(): string {
-  const base = API_URL.replace(/^http/, "ws");
+  const base = API_URL
+    ? API_URL.replace(/^http/, "ws")
+    : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
   return `${base}/ws${API_TOKEN ? `?token=${encodeURIComponent(API_TOKEN)}` : ""}`;
 }

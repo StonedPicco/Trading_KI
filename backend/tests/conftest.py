@@ -7,8 +7,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from app.core.config import Settings
 from app.core.market_time import session_times, set_fixed_now, trading_days
 from app.domain.models import BAR_COLUMNS
+
+# Tests must not pick up a developer's local .env / config/alpaca.env (real keys).
+Settings.model_config["env_file"] = None
 
 # Thursday, regular session (13:45 New York)
 FIXED_NOW = datetime(2026, 10, 22, 17, 45, tzinfo=UTC)
