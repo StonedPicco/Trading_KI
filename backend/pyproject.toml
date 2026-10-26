@@ -1,0 +1,77 @@
+[project]
+name = "ati-backend"
+version = "0.1.0"
+description = "AI Stock Trading Intelligence Platform – Analyse-Backend (keine Orderausführung)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "aiosqlite>=0.20",
+    "alembic>=1.13",
+    "httpx>=0.27",
+    "websockets>=12",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "exchange-calendars>=4.5",
+    "apscheduler>=3.10,<4",
+    "anthropic>=0.60",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "asgi-lifespan>=2.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning:exchange_calendars.*",
+    # raised inside exchange_calendars when it builds the XNYS calendar (third-party)
+    "ignore:Series.values returning an ndarray:pandas.errors.Pandas4Warning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF", "ASYNC", "DTZ", "S"]
+ignore = ["RUF001", "RUF002", "RUF003", "S101"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "DTZ"]
+"alembic/**" = ["N", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+exclude = ["alembic/", "tests/"]

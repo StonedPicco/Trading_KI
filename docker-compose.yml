@@ -1,0 +1,71 @@
+# Local development stack: PostgreSQL + API + worker + dashboard.
+#   docker compose up --build
+# Secrets come from .env (copy .env.example); nothing secret is hard-coded here.
+
+name: ati
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ati}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ati_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-ati}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ati} -d ${POSTGRES_DB:-ati}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ati}:${POSTGRES_PASSWORD:-ati_dev_only}@db:5432/${POSTGRES_DB:-ati}
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ati}:${POSTGRES_PASSWORD:-ati_dev_only}@db:5432/${POSTGRES_DB:-ati}
+      RUN_WORKER_IN_API: "false"
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ati}:${POSTGRES_PASSWORD:-ati_dev_only}@db:5432/${POSTGRES_DB:-ati}
+      RUN_WORKER_IN_API: "false"
+    command: ["python", "-m", "app.workers.scheduler"]
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
